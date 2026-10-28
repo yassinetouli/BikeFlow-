@@ -1,0 +1,325 @@
+{
+	"info": {
+		"_postman_id": "b1f3004e-0000-4a1e-8f9a-serviceflotte01",
+		"name": "service-flotte",
+		"description": "Tests REST du microservice Bike-Flow service-flotte (véhicules et stations). Importer dans Postman : File > Import > ce fichier.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8081" },
+		{ "key": "stationId", "value": "" },
+		{ "key": "vehicleId", "value": "" },
+		{ "key": "immatriculation", "value": "V-TEST-001" }
+	],
+	"item": [
+		{
+			"name": "Stations",
+			"item": [
+				{
+					"name": "1. Créer une station (201)",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Station Mohammed V\",\n  \"adresse\": \"12 avenue Mohammed V\",\n  \"capacite\": 10,\n  \"placesLibres\": 6\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/stations", "host": ["{{baseUrl}}"], "path": ["api", "stations"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('201 Created', () => pm.response.to.have.status(201));",
+									"const body = pm.response.json();",
+									"pm.collectionVariables.set('stationId', body.id);",
+									"console.log('stationId =', body.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "2. Lire la station par id (200)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/stations/{{stationId}}", "host": ["{{baseUrl}}"], "path": ["api", "stations", "{{stationId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('nom correct', () => pm.expect(pm.response.json().nom).to.eql('Station Mohammed V'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "3. Lister les stations (200)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/stations", "host": ["{{baseUrl}}"], "path": ["api", "stations"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "4. Mettre à jour la station (200)",
+					"request": {
+						"method": "PUT",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Station Mohammed V MAJ\",\n  \"adresse\": \"12 avenue Mohammed V\",\n  \"capacite\": 12,\n  \"placesLibres\": 8\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/stations/{{stationId}}", "host": ["{{baseUrl}}"], "path": ["api", "stations", "{{stationId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('placesLibres mises à jour', () => pm.expect(pm.response.json().placesLibres).to.eql(8));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "5a. Station invalide : placesLibres > capacite (400)",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Station Invalide\",\n  \"adresse\": \"1 rue du Test\",\n  \"capacite\": 5,\n  \"placesLibres\": 9\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/stations", "host": ["{{baseUrl}}"], "path": ["api", "stations"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [ "pm.test('400 Bad Request', () => pm.response.to.have.status(400));" ],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "5b. Station invalide : capacite = 0 (400)",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Station Invalide\",\n  \"adresse\": \"1 rue du Test\",\n  \"capacite\": 0,\n  \"placesLibres\": 0\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/stations", "host": ["{{baseUrl}}"], "path": ["api", "stations"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [ "pm.test('400 Bad Request', () => pm.response.to.have.status(400));" ],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "11a. Supprimer la station (204)",
+					"request": {
+						"method": "DELETE",
+						"url": { "raw": "{{baseUrl}}/api/stations/{{stationId}}", "host": ["{{baseUrl}}"], "path": ["api", "stations", "{{stationId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [ "pm.test('204 No Content', () => pm.response.to.have.status(204));" ],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "12. Station supprimée / inexistante (404)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/stations/{{stationId}}", "host": ["{{baseUrl}}"], "path": ["api", "stations", "{{stationId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [ "pm.test('404 Not Found', () => pm.response.to.have.status(404));" ],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Vehicles",
+			"item": [
+				{
+					"name": "6. Créer un véhicule (201, statut par défaut DISPONIBLE)",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"VELO\",\n  \"immatriculation\": \"{{immatriculation}}\",\n  \"autonomieKm\": 45\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/vehicles", "host": ["{{baseUrl}}"], "path": ["api", "vehicles"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('201 Created', () => pm.response.to.have.status(201));",
+									"const body = pm.response.json();",
+									"pm.test('statut par défaut DISPONIBLE', () => pm.expect(body.statut).to.eql('DISPONIBLE'));",
+									"pm.collectionVariables.set('vehicleId', body.id);",
+									"console.log('vehicleId =', body.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "7. Lire le véhicule par id (200)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/vehicles/{{vehicleId}}", "host": ["{{baseUrl}}"], "path": ["api", "vehicles", "{{vehicleId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('immatriculation correcte', () => pm.expect(pm.response.json().immatriculation).to.eql(pm.collectionVariables.get('immatriculation')));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "8. Lister les véhicules (200)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/vehicles", "host": ["{{baseUrl}}"], "path": ["api", "vehicles"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [ "pm.test('200 OK', () => pm.response.to.have.status(200));" ],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "10. Doublon d'immatriculation (409)",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"VELO\",\n  \"immatriculation\": \"{{immatriculation}}\",\n  \"autonomieKm\": 99\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/vehicles", "host": ["{{baseUrl}}"], "path": ["api", "vehicles"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [ "pm.test('409 Conflict', () => pm.response.to.have.status(409));" ],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "9. Mettre à jour le véhicule (200)",
+					"request": {
+						"method": "PUT",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"VELO\",\n  \"immatriculation\": \"{{immatriculation}}\",\n  \"autonomieKm\": 30,\n  \"statut\": \"EN_MAINTENANCE\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/vehicles/{{vehicleId}}", "host": ["{{baseUrl}}"], "path": ["api", "vehicles", "{{vehicleId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('autonomie mise à jour', () => pm.expect(pm.response.json().autonomieKm).to.eql(30));",
+									"pm.test('statut mis à jour', () => pm.expect(pm.response.json().statut).to.eql('EN_MAINTENANCE'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "11b. Supprimer le véhicule (204)",
+					"request": {
+						"method": "DELETE",
+						"url": { "raw": "{{baseUrl}}/api/vehicles/{{vehicleId}}", "host": ["{{baseUrl}}"], "path": ["api", "vehicles", "{{vehicleId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [ "pm.test('204 No Content', () => pm.response.to.have.status(204));" ],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "12. Véhicule supprimé / inexistant (404)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/vehicles/{{vehicleId}}", "host": ["{{baseUrl}}"], "path": ["api", "vehicles", "{{vehicleId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [ "pm.test('404 Not Found', () => pm.response.to.have.status(404));" ],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}
