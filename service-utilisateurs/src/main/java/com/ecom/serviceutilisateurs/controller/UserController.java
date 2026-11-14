@@ -1,5 +1,6 @@
 package com.ecom.serviceutilisateurs.controller;
 
+import com.ecom.serviceutilisateurs.client.FlotteClient;
 import com.ecom.serviceutilisateurs.dto.InvoiceResponseDTO;
 import com.ecom.serviceutilisateurs.dto.UserEligibilityDTO;
 import com.ecom.serviceutilisateurs.dto.UserRequestDTO;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -26,10 +28,12 @@ public class UserController {
 
     private final UserService userService;
     private final InvoiceService invoiceService;
+    private final FlotteClient flotteClient;
 
-    public UserController(UserService userService, InvoiceService invoiceService) {
+    public UserController(UserService userService, InvoiceService invoiceService, FlotteClient flotteClient) {
         this.userService = userService;
         this.invoiceService = invoiceService;
+        this.flotteClient = flotteClient;
     }
 
     @GetMapping
@@ -60,6 +64,17 @@ public class UserController {
     @GetMapping("/{id}/has-impayes")
     public boolean hasImpayes(@PathVariable Long id) {
         return userService.hasImpayes(id);
+    }
+
+    @GetMapping("/{userId}/demo-feign/{vehicleId}")
+    public Map<String, Object> demoFeign(@PathVariable Long userId, @PathVariable Long vehicleId) {
+        UserResponseDTO user = userService.findById(userId);
+        Map<String, Object> vehicle = flotteClient.getVehicleById(vehicleId);
+        return Map.of(
+                "user", user,
+                "vehicle", vehicle,
+                "feignStatus", "SUCCESS"
+        );
     }
 
     @PostMapping

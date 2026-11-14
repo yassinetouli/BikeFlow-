@@ -143,6 +143,28 @@
 							}
 						}
 					]
+				},
+				{
+					"name": "7. Démo OpenFeign (Appel inter-services vers flotte)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/users/{{userId}}/demo-feign/1", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "demo-feign", "1"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"pm.expect(body.feignStatus).to.eql('SUCCESS');",
+									"pm.expect(body.user).to.be.an('object');",
+									"pm.expect(body.vehicle).to.be.an('object');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
 				}
 			]
 		},
