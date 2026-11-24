@@ -1,0 +1,319 @@
+{
+	"info": {
+		"_postman_id": "c2e4005f-0000-4a2f-9a1b-serviceusers01",
+		"name": "service-utilisateurs",
+		"description": "Tests REST du microservice service-utilisateurs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8081" },
+		{ "key": "gatewayUrl", "value": "http://localhost:8080" },
+		{ "key": "userId", "value": "" },
+		{ "key": "userEmail", "value": "mounir.ghalem@example.com" },
+		{ "key": "invoiceId", "value": "" }
+	],
+	"item": [
+		{
+			"name": "Utilisateurs",
+			"item": [
+				{
+					"name": "1. Créer un utilisateur (201)",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Mounir Ghalem\",\n  \"email\": \"{{userEmail}}\",\n  \"moyenPaiement\": \"CB_VISA_4242\",\n  \"suspendu\": false\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('201 Created', () => pm.response.to.have.status(201));",
+									"const body = pm.response.json();",
+									"pm.collectionVariables.set('userId', body.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "2. Lire l'utilisateur par id (200)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('nom correct', () => pm.expect(pm.response.json().nom).to.eql('Mounir Ghalem'));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "3. Vérifier éligibilité (200)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/users/{{userId}}/eligibilite", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "eligibilite"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.test('eligible', () => pm.expect(pm.response.json().eligible).to.eql(true));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "4. Lister les utilisateurs (200)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "5. Modifier l'utilisateur (200)",
+					"request": {
+						"method": "PUT",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Mounir Ghalem\",\n  \"email\": \"{{userEmail}}\",\n  \"moyenPaiement\": \"MASTERCARD_5555\",\n  \"suspendu\": false\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.expect(pm.response.json().moyenPaiement).to.eql('MASTERCARD_5555');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "6. Rejet doublon email (409)",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Autre Utilisateur\",\n  \"email\": \"{{userEmail}}\",\n  \"moyenPaiement\": \"PAYPAL\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "7. Démo OpenFeign (Appel inter-services vers flotte)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/users/{{userId}}/demo-feign/1", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "demo-feign", "1"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"const body = pm.response.json();",
+									"pm.expect(body.feignStatus).to.eql('SUCCESS');",
+									"pm.expect(body.user).to.be.an('object');",
+									"pm.expect(body.vehicle).to.be.an('object');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Factures",
+			"item": [
+				{
+					"name": "1. Créer une facture (201)",
+					"request": {
+						"method": "POST",
+						"header": [ { "key": "Content-Type", "value": "application/json" } ],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"rentalId\": 101,\n  \"userId\": {{userId}},\n  \"montant\": 15.50,\n  \"date\": \"2026-11-14\",\n  \"echeance\": \"2026-12-14\",\n  \"statut\": \"EN_ATTENTE\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/invoices", "host": ["{{baseUrl}}"], "path": ["api", "invoices"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('201 Created', () => pm.response.to.have.status(201));",
+									"const body = pm.response.json();",
+									"pm.collectionVariables.set('invoiceId', body.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "2. Marquer facture IMPAYEE (200)",
+					"request": {
+						"method": "PUT",
+						"url": { "raw": "{{baseUrl}}/api/invoices/{{invoiceId}}/statut?statut=IMPAYEE", "host": ["{{baseUrl}}"], "path": ["api", "invoices", "{{invoiceId}}", "statut"], "query": [{"key": "statut", "value": "IMPAYEE"}] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.expect(pm.response.json().statut).to.eql('IMPAYEE');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "3. Vérifier blocage utilisateur (200)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/users/{{userId}}/eligibilite", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "eligibilite"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.expect(pm.response.json().eligible).to.eql(false);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "4. Payer la facture (200)",
+					"request": {
+						"method": "PUT",
+						"url": { "raw": "{{baseUrl}}/api/invoices/{{invoiceId}}/statut?statut=PAYEE", "host": ["{{baseUrl}}"], "path": ["api", "invoices", "{{invoiceId}}", "statut"], "query": [{"key": "statut", "value": "PAYEE"}] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.expect(pm.response.json().statut).to.eql('PAYEE');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "5. Vérifier déblocage utilisateur (200)",
+					"request": {
+						"method": "GET",
+						"url": { "raw": "{{baseUrl}}/api/users/{{userId}}/eligibilite", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "eligibilite"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('200 OK', () => pm.response.to.have.status(200));",
+									"pm.expect(pm.response.json().eligible).to.eql(true);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Nettoyage",
+			"item": [
+				{
+					"name": "1. Supprimer la facture (204)",
+					"request": {
+						"method": "DELETE",
+						"url": { "raw": "{{baseUrl}}/api/invoices/{{invoiceId}}", "host": ["{{baseUrl}}"], "path": ["api", "invoices", "{{invoiceId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('204 No Content', () => pm.response.to.have.status(204));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "2. Supprimer l'utilisateur (204)",
+					"request": {
+						"method": "DELETE",
+						"url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('204 No Content', () => pm.response.to.have.status(204));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}
