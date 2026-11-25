@@ -1,11 +1,16 @@
-package com.ecom.serviceflotte.entity;
+package com.ecom.serviceflotte.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 /**
  * Station de prise en charge et de retour des vehicules.
+ * Les controles de saisie sont faits dans le DTO (StationRequest) et les
+ * regles metier dans StationService, comme dans le service-locations.
  */
 @Entity
 @Table(name = "stations")
@@ -15,19 +20,20 @@ public class Station {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @Column(nullable = false, length = 100)
     private String nom;
 
-    @NotBlank
+    @Column(nullable = false, length = 255)
     private String adresse;
 
-    @Min(1)
+    @Column(nullable = false)
     private int capacite;
 
-    @Min(0)
+    @Column(nullable = false)
     private int placesLibres;
 
     public Station() {
+        // requis par JPA et par le service qui construit la station depuis le DTO
     }
 
     public Long getId() {

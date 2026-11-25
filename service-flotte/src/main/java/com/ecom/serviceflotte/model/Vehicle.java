@@ -1,4 +1,4 @@
-package com.ecom.serviceflotte.entity;
+package com.ecom.serviceflotte.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,9 +9,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Vehicule partage (velo ou trottinette) disponible dans la flotte.
@@ -26,18 +23,16 @@ public class Vehicle {
     private Long id;
 
     /** Type de vehicule : VELO ou TROTTINETTE. */
-    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private VehicleType type;
 
     /** Identifiant unique du vehicule (comme une immatriculation). */
-    @NotBlank
     @Column(nullable = false, unique = true, length = 30)
     private String immatriculation;
 
     /** Autonomie restante estimee en kilometres. */
-    @Min(0)
+    @Column(nullable = false)
     private int autonomieKm;
 
     /** Statut actuel : DISPONIBLE, EN_LOCATION ou EN_MAINTENANCE. */
@@ -46,6 +41,7 @@ public class Vehicle {
     private VehicleStatus statut;
 
     public Vehicle() {
+        // requis par JPA et par le service qui construit le vehicule depuis le DTO
     }
 
     public Long getId() {

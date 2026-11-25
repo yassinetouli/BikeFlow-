@@ -2,7 +2,7 @@ package com.ecom.serviceflotte.repository;
 
 import java.util.Optional;
 
-import com.ecom.serviceflotte.entity.Vehicle;
+import com.ecom.serviceflotte.model.Vehicle;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

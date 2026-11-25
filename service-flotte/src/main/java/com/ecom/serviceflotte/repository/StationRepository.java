@@ -1,6 +1,6 @@
 package com.ecom.serviceflotte.repository;
 
-import com.ecom.serviceflotte.entity.Station;
+import com.ecom.serviceflotte.model.Station;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
