@@ -20,8 +20,7 @@ Le projet permet de gérer les utilisateurs, les factures, la flotte de véhicul
 
 ## Architecture
 
-<img width="2760" height="1480" alt="architecture_microservices_style_original" src="https://github.com/user-attachments/assets/47e874c2-440c-4edf-a8f2-df6848d3cbe8" />
-
+<img width="1600" height="1105" alt="WhatsApp Image 2026-11-25 at 16 47 09" src="https://github.com/user-attachments/assets/45e14bcf-e292-432e-82df-ccd35dab2448" />
 
 | Composant | Rôle | Port |
 |---|---|---:|
