@@ -1,0 +1,2398 @@
+{
+  "info": {
+    "name": "BikeFlow - Tous les services",
+    "description": "Collection complete BikeFlow : parcours E2E inter-services puis, service par service, toutes les requetes des collections service-utilisateurs, service-flotte et service-locations (memes tests, memes codes attendus).\n\nPrerequis : MySQL sur 3306, service-utilisateurs 8081, service-locations 8082, service-flotte 8083. Ordre : lancer la collection entiere via le Collection Runner, du haut vers le bas (les ids captures dans un dossier servent aux requetes suivantes).\n\nVariables : utilisateursUrl, flotteUrl, locationsUrl (modifier si vos ports changent). La Gateway (8080) n'est pas testee ici : seule la route /api/users/** y est active.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "utilisateursUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "flotteUrl",
+      "value": "http://localhost:8083"
+    },
+    {
+      "key": "locationsUrl",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "gatewayUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "e2eEmail",
+      "value": "bikeflow.e2e@example.com"
+    },
+    {
+      "key": "e2eImmatriculation",
+      "value": "V-E2E-001"
+    },
+    {
+      "key": "e2eUserId",
+      "value": ""
+    },
+    {
+      "key": "e2eStationId",
+      "value": ""
+    },
+    {
+      "key": "e2eVehicleId",
+      "value": ""
+    },
+    {
+      "key": "e2eRentalId",
+      "value": ""
+    },
+    {
+      "key": "userEmail",
+      "value": "mounir.ghalem@example.com"
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "invoiceId",
+      "value": ""
+    },
+    {
+      "key": "stationId",
+      "value": ""
+    },
+    {
+      "key": "vehicleId",
+      "value": ""
+    },
+    {
+      "key": "immatriculation",
+      "value": "V-TEST-001"
+    },
+    {
+      "key": "rentalId",
+      "value": ""
+    },
+    {
+      "key": "rentalId2",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0 - Parcours E2E (utilisateurs + flotte + locations)",
+      "description": "Scenario complet inter-services : creation d'un utilisateur (8081), d'une station et d'un vehicule (8083), appel OpenFeign utilisateurs -> flotte, puis location du vehicule (8082) jusqu'a la cloture, avec nettoyage. A lancer en premier, la collection supprime elle-meme ses donnees a la fin (sauf la location, sans endpoint DELETE).",
+      "item": [
+        {
+          "name": "01 - Creer l utilisateur E2E (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('e2eUserId', pm.response.json().id);",
+                  "pm.test('email enregistre', function () { pm.expect(pm.response.json().email).to.eql(pm.collectionVariables.get('e2eEmail')); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"BikeFlow E2E\",\n  \"email\": \"{{e2eEmail}}\",\n  \"moyenPaiement\": \"CB_VISA_4242\",\n  \"suspendu\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{utilisateursUrl}}/api/users",
+              "host": [
+                "{{utilisateursUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 - Eligibilite de l utilisateur (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('eligible', function () { pm.expect(pm.response.json().eligible).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{utilisateursUrl}}/api/users/{{e2eUserId}}/eligibilite",
+              "host": [
+                "{{utilisateursUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{e2eUserId}}",
+                "eligibilite"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 - Creer la station E2E (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('e2eStationId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nom\": \"Station E2E\",\n  \"adresse\": \"1 rue du Parcours E2E\",\n  \"capacite\": 8,\n  \"placesLibres\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{flotteUrl}}/api/stations",
+              "host": [
+                "{{flotteUrl}}"
+              ],
+              "path": [
+                "api",
+                "stations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 - Creer le vehicule E2E (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('e2eVehicleId', pm.response.json().id);",
+                  "pm.test('statut DISPONIBLE', function () { pm.expect(pm.response.json().statut).to.eql('DISPONIBLE'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"VELO\",\n  \"immatriculation\": \"{{e2eImmatriculation}}\",\n  \"autonomieKm\": 40\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{flotteUrl}}/api/vehicles",
+              "host": [
+                "{{flotteUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 - OpenFeign : utilisateurs appelle flotte (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('communication inter-services OK', function () { pm.expect(pm.response.json().feignStatus).to.eql('SUCCESS'); });",
+                  "pm.test('vehicule recupere depuis la flotte', function () { pm.expect(pm.response.json().vehicle).to.be.an('object'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{utilisateursUrl}}/api/users/{{e2eUserId}}/demo-feign/{{e2eVehicleId}}",
+              "host": [
+                "{{utilisateursUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{e2eUserId}}",
+                "demo-feign",
+                "{{e2eVehicleId}}"
+              ]
+            },
+            "description": "service-utilisateurs (8081) appelle service-flotte (8083) via OpenFeign. Echoue si le service-flotte n'est pas demarre."
+          },
+          "response": []
+        },
+        {
+          "name": "06 - Reserver la location (201)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('e2eRentalId', pm.response.json().id);",
+                  "pm.test('statut RESERVEE', function () { pm.expect(pm.response.json().statut).to.eql('RESERVEE'); });",
+                  "pm.test('vehicule rattache', function () { pm.expect(pm.response.json().vehicleId).to.eql(Number(pm.collectionVariables.get('e2eVehicleId'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicleId\": \"{{e2eVehicleId}}\",\n  \"userEmail\": \"{{e2eEmail}}\",\n  \"stationDepart\": \"{{e2eStationId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{locationsUrl}}/api/rentals",
+              "host": [
+                "{{locationsUrl}}"
+              ],
+              "path": [
+                "api",
+                "rentals"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "07 - Demarrer la location (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('statut EN_COURS', function () { pm.expect(pm.response.json().statut).to.eql('EN_COURS'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{locationsUrl}}/api/rentals/{{e2eRentalId}}/start",
+              "host": [
+                "{{locationsUrl}}"
+              ],
+              "path": [
+                "api",
+                "rentals",
+                "{{e2eRentalId}}",
+                "start"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "08 - Terminer la location (200, montant calcule)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('statut TERMINEE', function () { pm.expect(pm.response.json().statut).to.eql('TERMINEE'); });",
+                  "pm.test('montant = 9 (4.5 km x 2.00)', function () { pm.expect(pm.response.json().montant).to.eql(9); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stationArrive\": \"{{e2eStationId}}\",\n  \"kmParcourus\": 4.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{locationsUrl}}/api/rentals/{{e2eRentalId}}/finish",
+              "host": [
+                "{{locationsUrl}}"
+              ],
+              "path": [
+                "api",
+                "rentals",
+                "{{e2eRentalId}}",
+                "finish"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "09 - Historique de l utilisateur (200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('la location E2E apparait dans l historique', function () { var ids = pm.response.json().map(function (r) { return r.id; }); pm.expect(ids).to.include(Number(pm.collectionVariables.get('e2eRentalId'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{locationsUrl}}/api/rentals/user/{{e2eEmail}}",
+              "host": [
+                "{{locationsUrl}}"
+              ],
+              "path": [
+                "api",
+                "rentals",
+                "user",
+                "{{e2eEmail}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "10 - Nettoyage : supprimer le vehicule (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{flotteUrl}}/api/vehicles/{{e2eVehicleId}}",
+              "host": [
+                "{{flotteUrl}}"
+              ],
+              "path": [
+                "api",
+                "vehicles",
+                "{{e2eVehicleId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "11 - Nettoyage : supprimer la station (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{flotteUrl}}/api/stations/{{e2eStationId}}",
+              "host": [
+                "{{flotteUrl}}"
+              ],
+              "path": [
+                "api",
+                "stations",
+                "{{e2eStationId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "12 - Nettoyage : supprimer l utilisateur (204)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statut 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{utilisateursUrl}}/api/users/{{e2eUserId}}",
+              "host": [
+                "{{utilisateursUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "{{e2eUserId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "1 - service-utilisateurs (8081)",
+      "item": [
+        {
+          "name": "Utilisateurs",
+          "item": [
+            {
+              "name": "1. Créer un utilisateur (201)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nom\": \"Mounir Ghalem\",\n  \"email\": \"{{userEmail}}\",\n  \"moyenPaiement\": \"CB_VISA_4242\",\n  \"suspendu\": false\n}"
+                },
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/users",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                      "const body = pm.response.json();",
+                      "pm.collectionVariables.set('userId', body.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "2. Lire l'utilisateur par id (200)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/users/{{userId}}",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "{{userId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('nom correct', () => pm.expect(pm.response.json().nom).to.eql('Mounir Ghalem'));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "3. Vérifier éligibilité (200)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/users/{{userId}}/eligibilite",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "{{userId}}",
+                    "eligibilite"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                      "pm.test('eligible', () => pm.expect(pm.response.json().eligible).to.eql(true));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "4. Lister les utilisateurs (200)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/users",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('200 OK', () => pm.response.to.have.status(200));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "5. Modifier l'utilisateur (200)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nom\": \"Mounir Ghalem\",\n  \"email\": \"{{userEmail}}\",\n  \"moyenPaiement\": \"MASTERCARD_5555\",\n  \"suspendu\": false\n}"
+                },
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/users/{{userId}}",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "{{userId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                      "pm.expect(pm.response.json().moyenPaiement).to.eql('MASTERCARD_5555');"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "6. Rejet doublon email (409)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nom\": \"Autre Utilisateur\",\n  \"email\": \"{{userEmail}}\",\n  \"moyenPaiement\": \"PAYPAL\"\n}"
+                },
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/users",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('409 Conflict', () => pm.response.to.have.status(409));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Factures",
+          "item": [
+            {
+              "name": "1. Créer une facture (201)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"rentalId\": 101,\n  \"userId\": {{userId}},\n  \"montant\": 15.50,\n  \"date\": \"2026-11-14\",\n  \"echeance\": \"2026-12-14\",\n  \"statut\": \"EN_ATTENTE\"\n}"
+                },
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/invoices",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "invoices"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                      "const body = pm.response.json();",
+                      "pm.collectionVariables.set('invoiceId', body.id);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "2. Marquer facture IMPAYEE (200)",
+              "request": {
+                "method": "PUT",
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/invoices/{{invoiceId}}/statut?statut=IMPAYEE",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "invoices",
+                    "{{invoiceId}}",
+                    "statut"
+                  ],
+                  "query": [
+                    {
+                      "key": "statut",
+                      "value": "IMPAYEE"
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                      "pm.expect(pm.response.json().statut).to.eql('IMPAYEE');"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "3. Vérifier blocage utilisateur (200)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/users/{{userId}}/eligibilite",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "{{userId}}",
+                    "eligibilite"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                      "pm.expect(pm.response.json().eligible).to.eql(false);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "4. Payer la facture (200)",
+              "request": {
+                "method": "PUT",
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/invoices/{{invoiceId}}/statut?statut=PAYEE",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "invoices",
+                    "{{invoiceId}}",
+                    "statut"
+                  ],
+                  "query": [
+                    {
+                      "key": "statut",
+                      "value": "PAYEE"
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                      "pm.expect(pm.response.json().statut).to.eql('PAYEE');"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "5. Vérifier déblocage utilisateur (200)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/users/{{userId}}/eligibilite",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "{{userId}}",
+                    "eligibilite"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                      "pm.expect(pm.response.json().eligible).to.eql(true);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Nettoyage",
+          "item": [
+            {
+              "name": "1. Supprimer la facture (204)",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/invoices/{{invoiceId}}",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "invoices",
+                    "{{invoiceId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "2. Supprimer l'utilisateur (204)",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{utilisateursUrl}}/api/users/{{userId}}",
+                  "host": [
+                    "{{utilisateursUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "users",
+                    "{{userId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 - service-flotte (8083)",
+      "item": [
+        {
+          "name": "A - Cas valides",
+          "item": [
+            {
+              "name": "01 - Créer une station (201)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/stations",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "stations"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nom\": \"Station Mohammed V\",\n  \"adresse\": \"12 avenue Mohammed V\",\n  \"capacite\": 10,\n  \"placesLibres\": 6\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.collectionVariables.set(\"stationId\", pm.response.json().id);",
+                      "pm.test(\"nom correct\", function () { pm.expect(pm.response.json().nom).to.eql(\"Station Mohammed V\"); });",
+                      "pm.test(\"placesLibres = 6\", function () { pm.expect(pm.response.json().placesLibres).to.eql(6); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "02 - Consulter la station (200)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/stations/{{stationId}}",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "stations",
+                    "{{stationId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"capacite = 10\", function () { pm.expect(pm.response.json().capacite).to.eql(10); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "03 - Lister les stations (200)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/stations",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "stations"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"liste non vide\", function () { pm.expect(pm.response.json()).to.be.an(\"array\").that.is.not.empty; });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "04 - Mettre à jour la station (200)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/stations/{{stationId}}",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "stations",
+                    "{{stationId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nom\": \"Station Mohammed V MAJ\",\n  \"adresse\": \"12 avenue Mohammed V\",\n  \"capacite\": 12,\n  \"placesLibres\": 8\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"placesLibres mises à jour\", function () { pm.expect(pm.response.json().placesLibres).to.eql(8); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "05 - Créer un véhicule (201, statut par défaut DISPONIBLE)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/vehicles",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "vehicles"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"VELO\",\n  \"immatriculation\": \"{{immatriculation}}\",\n  \"autonomieKm\": 45\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.collectionVariables.set(\"vehicleId\", pm.response.json().id);",
+                      "pm.test(\"statut par défaut DISPONIBLE\", function () { pm.expect(pm.response.json().statut).to.eql(\"DISPONIBLE\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "06 - Consulter le véhicule (200)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/vehicles/{{vehicleId}}",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "vehicles",
+                    "{{vehicleId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"immatriculation correcte\", function () { pm.expect(pm.response.json().immatriculation).to.eql(pm.collectionVariables.get(\"immatriculation\")); });",
+                      "pm.test(\"type VELO\", function () { pm.expect(pm.response.json().type).to.eql(\"VELO\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "07 - Lister les véhicules (200)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/vehicles",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "vehicles"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"liste non vide\", function () { pm.expect(pm.response.json()).to.be.an(\"array\").that.is.not.empty; });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "08 - Mettre à jour le véhicule (200)",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/vehicles/{{vehicleId}}",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "vehicles",
+                    "{{vehicleId}}"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"VELO\",\n  \"immatriculation\": \"{{immatriculation}}\",\n  \"autonomieKm\": 30,\n  \"statut\": \"EN_MAINTENANCE\"\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"autonomie mise à jour\", function () { pm.expect(pm.response.json().autonomieKm).to.eql(30); });",
+                      "pm.test(\"statut mis à jour\", function () { pm.expect(pm.response.json().statut).to.eql(\"EN_MAINTENANCE\"); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "B - Erreurs de validation (400)",
+          "item": [
+            {
+              "name": "09 - Station : placesLibres > capacite",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/stations",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "stations"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nom\": \"Station Invalide\",\n  \"adresse\": \"1 rue du Test\",\n  \"capacite\": 5,\n  \"placesLibres\": 9\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 400\", function () { pm.response.to.have.status(400); });",
+                      "pm.test(\"corps d'erreur normalisé\", function () { pm.expect(pm.response.json()).to.include.keys(\"timestamp\", \"status\", \"message\", \"path\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "10 - Station : capacite = 0",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/stations",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "stations"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nom\": \"Station Invalide\",\n  \"adresse\": \"1 rue du Test\",\n  \"capacite\": 0,\n  \"placesLibres\": 0\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 400\", function () { pm.response.to.have.status(400); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "11 - Station : corps vide",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/stations",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "stations"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 400\", function () { pm.response.to.have.status(400); });",
+                      "pm.test(\"détails de validation présents\", function () { pm.expect(pm.response.json().details).to.be.an(\"array\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "12 - Véhicule : type inconnu",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/vehicles",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "vehicles"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"BIDON\",\n  \"immatriculation\": \"V-BIDON-001\",\n  \"autonomieKm\": 10\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 400\", function () { pm.response.to.have.status(400); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "13 - Id non numérique",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/stations/abc",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "stations",
+                    "abc"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 400\", function () { pm.response.to.have.status(400); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "C - Ressources inexistantes (404)",
+          "item": [
+            {
+              "name": "14 - Station inexistante",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/stations/9999",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "stations",
+                    "9999"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 404\", function () { pm.response.to.have.status(404); });",
+                      "pm.test(\"corps d'erreur normalisé\", function () { pm.expect(pm.response.json().status).to.eql(404); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "15 - Véhicule inexistant",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/vehicles/9999",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "vehicles",
+                    "9999"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "D - Règles de gestion (409)",
+          "item": [
+            {
+              "name": "16 - Doublon d'immatriculation",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/vehicles",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "vehicles"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"type\": \"VELO\",\n  \"immatriculation\": \"{{immatriculation}}\",\n  \"autonomieKm\": 99\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 409\", function () { pm.response.to.have.status(409); });",
+                      "pm.test(\"corps d'erreur normalisé\", function () { pm.expect(pm.response.json().status).to.eql(409); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "E - Suppression",
+          "item": [
+            {
+              "name": "17 - Supprimer la station (204)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/stations/{{stationId}}",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "stations",
+                    "{{stationId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 204\", function () { pm.response.to.have.status(204); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "18 - Station supprimée / inexistante (404)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/stations/{{stationId}}",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "stations",
+                    "{{stationId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "19 - Supprimer le véhicule (204)",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/vehicles/{{vehicleId}}",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "vehicles",
+                    "{{vehicleId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 204\", function () { pm.response.to.have.status(204); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "20 - Véhicule supprimé / inexistant (404)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{flotteUrl}}/api/vehicles/{{vehicleId}}",
+                  "host": [
+                    "{{flotteUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "vehicles",
+                    "{{vehicleId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 - service-locations (8082)",
+      "item": [
+        {
+          "name": "A - Cas valides",
+          "item": [
+            {
+              "name": "01 - Créer une location (201)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"vehicleId\": 1,\n  \"userEmail\": \"salma@bikeflow.com\",\n  \"stationDepart\": 100\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.collectionVariables.set(\"rentalId\", pm.response.json().id);",
+                      "pm.test(\"Statut RESERVEE\", function () { pm.expect(pm.response.json().statut).to.eql(\"RESERVEE\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "02 - Consulter la location (200)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/{{rentalId}}",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "{{rentalId}}"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "03 - Démarrer la location (200)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/{{rentalId}}/start",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "{{rentalId}}",
+                    "start"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"EN_COURS\", function () { pm.expect(pm.response.json().statut).to.eql(\"EN_COURS\"); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "04 - Terminer la location (200)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/{{rentalId}}/finish",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "{{rentalId}}",
+                    "finish"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"stationArrive\": 200,\n  \"kmParcourus\": 12.5\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"montant = 25\", function () { pm.expect(pm.response.json().montant).to.eql(25); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "05 - Historique utilisateur (200)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/user/salma@bikeflow.com",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "user",
+                    "salma@bikeflow.com"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "06 - Lister toutes les locations (200)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "B - Erreurs de validation (400)",
+          "item": [
+            {
+              "name": "07 - Création : corps vide",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 400\", function () { pm.response.to.have.status(400); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "08 - Création : id négatif et email invalide",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"vehicleId\": -1,\n  \"userEmail\": \"pas-un-email\",\n  \"stationDepart\": 100\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 400\", function () { pm.response.to.have.status(400); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "09 - Fin : km négatifs",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/{{rentalId}}/finish",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "{{rentalId}}",
+                    "finish"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"stationArrive\": 200,\n  \"kmParcourus\": -5\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 400\", function () { pm.response.to.have.status(400); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "10 - Statut inconnu",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/{{rentalId}}/status",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "{{rentalId}}",
+                    "status"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"statut\": \"BIDON\"\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 400\", function () { pm.response.to.have.status(400); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "11 - Id non numérique",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/abc",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "abc"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 400\", function () { pm.response.to.have.status(400); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "C - Ressources inexistantes (404)",
+          "item": [
+            {
+              "name": "12 - Consulter id inexistant",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/9999",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "9999"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "13 - Démarrer id inexistant",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/9999/start",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "9999",
+                    "start"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "14 - Terminer id inexistant",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/9999/finish",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "9999",
+                    "finish"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"stationArrive\": 200,\n  \"kmParcourus\": 3\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 404\", function () { pm.response.to.have.status(404); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "D - Règles de gestion (409)",
+          "item": [
+            {
+              "name": "15 - Créer (véhicule 2)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"vehicleId\": 2,\n  \"userEmail\": \"ali@bikeflow.com\",\n  \"stationDepart\": 100\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.collectionVariables.set(\"rentalId2\", pm.response.json().id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "16 - Même véhicule déjà loué",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"vehicleId\": 2,\n  \"userEmail\": \"sara@bikeflow.com\",\n  \"stationDepart\": 100\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 409\", function () { pm.response.to.have.status(409); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "17 - Terminer avant de démarrer",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/{{rentalId2}}/finish",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "{{rentalId2}}",
+                    "finish"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"stationArrive\": 200,\n  \"kmParcourus\": 3\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 409\", function () { pm.response.to.have.status(409); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "18 - PATCH vers TERMINEE interdit",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/{{rentalId2}}/status",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "{{rentalId2}}",
+                    "status"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"statut\": \"TERMINEE\"\n}"
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 409\", function () { pm.response.to.have.status(409); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "19 - Démarrer (200)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/{{rentalId2}}/start",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "{{rentalId2}}",
+                    "start"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 200\", function () { pm.response.to.have.status(200); });"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "20 - Redémarrer une location EN_COURS",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{locationsUrl}}/api/rentals/{{rentalId2}}/start",
+                  "host": [
+                    "{{locationsUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "rentals",
+                    "{{rentalId2}}",
+                    "start"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Statut 409\", function () { pm.response.to.have.status(409); });"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
