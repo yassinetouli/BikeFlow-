@@ -36,8 +36,6 @@ Le projet permet de gérer les utilisateurs, les factures, la flotte de véhicul
 
 ## Diagramme de classes
 
-<img width="1536" height="1024" alt="class_bikeflow" src="https://github.com/user-attachments/assets/293a8f1d-0fb3-498e-a030-c5a69f0cde8e" />
-
 
 ## Structure du projet
 
