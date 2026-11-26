@@ -35,6 +35,7 @@ Le projet permet de gérer les utilisateurs, les factures, la flotte de véhicul
 | phpMyAdmin | Interface d'administration MySQL | 8085 |
 
 ## Diagramme de classes
+<img width="2105" height="2198" alt="diagramme_classes (1)" src="https://github.com/user-attachments/assets/7740d740-264c-4a21-b5a2-09ccc42a4ce7" />
 
 
 ## Structure du projet
