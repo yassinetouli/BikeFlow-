@@ -181,6 +181,96 @@ classDiagram
         }
     }
 
+    namespace ServiceLocations {
+        class Rental {
+            -Long id
+            -Long vehicleId
+            -String userEmail
+            -Long stationDepart
+            -Long stationArrive
+            -LocalDateTime dateDebut
+            -LocalDateTime dateFin
+            -Double kmParcourus
+            -BigDecimal montant
+            -RentalStatus statut
+            +reserver(Long, String, Long) Rental
+            +demarrer() void
+            +terminer(Long, Double, BigDecimal) void
+            +marquerEnRetard() void
+            +getStatut() RentalStatus
+        }
+
+        class RentalStatus {
+            <<enumeration>>
+            RESERVEE
+            EN_COURS
+            TERMINEE
+            EN_RETARD
+        }
+
+        class RentalService {
+            -RentalRepository repository
+            -BigDecimal tarifParKm
+            +reserver(RentalCreateRequest) RentalResponse
+            +getById(Long) RentalResponse
+            +getByUser(String) List~RentalResponse~
+            +getAll() List~RentalResponse~
+            +demarrer(Long) RentalResponse
+            +terminer(Long, RentalFinishRequest) RentalResponse
+            +updateStatus(Long, RentalStatusUpdateRequest) RentalResponse
+        }
+
+        class RentalController {
+            -RentalService service
+            +create(RentalCreateRequest) ResponseEntity~RentalResponse~
+            +getAll() List~RentalResponse~
+            +getById(Long) RentalResponse
+            +getByUser(String) List~RentalResponse~
+            +start(Long) RentalResponse
+            +finish(Long, RentalFinishRequest) RentalResponse
+            +updateStatus(Long, RentalStatusUpdateRequest) RentalResponse
+        }
+
+        class RentalRepository {
+            <<interface>>
+            +findByUserEmailOrderByIdDesc(String) List~Rental~
+            +existsByVehicleIdAndStatutIn(Long, Collection~RentalStatus~) boolean
+        }
+
+        class RentalCreateRequest {
+            <<record>>
+            -Long vehicleId
+            -String userEmail
+            -Long stationDepart
+        }
+
+        class RentalFinishRequest {
+            <<record>>
+            -Long stationArrive
+            -Double kmParcourus
+        }
+
+        class RentalStatusUpdateRequest {
+            <<record>>
+            -RentalStatus statut
+        }
+
+        class RentalResponse {
+            <<record>>
+            -Long id
+            -Long vehicleId
+            -String userEmail
+            -Long stationDepart
+            -Long stationArrive
+            -LocalDateTime dateDebut
+            -LocalDateTime dateFin
+            -Double kmParcourus
+            -BigDecimal montant
+            -RentalStatus statut
+            +from(Rental) RentalResponse
+        }
+    }
+
     namespace ServiceNotifications {
         class NotificationEmailDto {
             <<record>>
@@ -221,6 +311,19 @@ classDiagram
     VehicleService --> VehicleRepository
     StationController --> StationService
     VehicleController --> VehicleService
+    Rental --> RentalStatus : statut
+    RentalService --> RentalRepository
+    RentalController --> RentalService
+    RentalRepository ..> Rental
+    RentalService ..> RentalCreateRequest
+    RentalService ..> RentalFinishRequest
+    RentalService ..> RentalStatusUpdateRequest
+    RentalService ..> RentalResponse
+    RentalController ..> RentalCreateRequest
+    RentalController ..> RentalFinishRequest
+    RentalController ..> RentalStatusUpdateRequest
+    RentalController ..> RentalResponse
+    RentalResponse ..> Rental
     UserRepository ..> User
     InvoiceRepository ..> Invoice
     StationRepository ..> Station
@@ -232,5 +335,8 @@ classDiagram
     NotificationService ..> NotificationEmailDto
 
     User "1" o-- "0..*" Invoice : referencee par userId
-    Invoice ..> Vehicle : referencee par rentalId
+    User "1" o-- "0..*" Rental : referencee par userEmail
+    Vehicle "1" o-- "0..*" Rental : referencee par vehicleId
+    Station "1" o-- "0..*" Rental : depart / arrivee
+    Rental "1" o-- "0..1" Invoice : referencee par rentalId
 ```
