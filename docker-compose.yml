@@ -1,0 +1,36 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: bikeflow-mysql
+    restart: always
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - bikeflow-net
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: bikeflow-phpmyadmin
+    restart: always
+    ports:
+      - "8085:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+    depends_on:
+      - mysql
+    networks:
+      - bikeflow-net
+
+volumes:
+  mysql_data:
+
+networks:
+  bikeflow-net:
+    driver: bridge

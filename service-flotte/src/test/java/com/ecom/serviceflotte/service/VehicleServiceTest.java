@@ -2,9 +2,13 @@ package com.ecom.serviceflotte.service;
 
 import java.util.Optional;
 
-import com.ecom.serviceflotte.entity.Vehicle;
-import com.ecom.serviceflotte.entity.VehicleStatus;
-import com.ecom.serviceflotte.entity.VehicleType;
+import com.ecom.serviceflotte.dto.VehicleRequest;
+import com.ecom.serviceflotte.dto.VehicleResponse;
+import com.ecom.serviceflotte.exception.BusinessException;
+import com.ecom.serviceflotte.exception.ResourceNotFoundException;
+import com.ecom.serviceflotte.model.Vehicle;
+import com.ecom.serviceflotte.model.VehicleStatus;
+import com.ecom.serviceflotte.model.VehicleType;
 import com.ecom.serviceflotte.repository.VehicleRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,8 +23,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Tests unitaires du service vehicule : le repository est simule (Mockito),
@@ -37,23 +39,20 @@ class VehicleServiceTest {
 
     @Test
     void create_withoutStatut_setsDisponible() {
-        Vehicle v = exemple("VELO-001");
         when(vehicleRepository.existsByImmatriculation("VELO-001")).thenReturn(false);
         when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Vehicle resultat = vehicleService.create(v);
+        VehicleResponse resultat = vehicleService.create(exemple("VELO-001"));
 
-        assertEquals(VehicleStatus.DISPONIBLE, resultat.getStatut());
+        assertEquals(VehicleStatus.DISPONIBLE, resultat.statut());
+        assertEquals(VehicleType.VELO, resultat.type());
     }
 
     @Test
     void create_withDuplicateImmatriculation_throws409() {
         when(vehicleRepository.existsByImmatriculation("VELO-001")).thenReturn(true);
 
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> vehicleService.create(exemple("VELO-001")));
-
-        assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+        assertThrows(BusinessException.class, () -> vehicleService.create(exemple("VELO-001")));
         verify(vehicleRepository, never()).save(any(Vehicle.class));
     }
 
@@ -61,55 +60,51 @@ class VehicleServiceTest {
     void findById_withUnknownId_throws404() {
         when(vehicleRepository.findById(99L)).thenReturn(Optional.empty());
 
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> vehicleService.findById(99L));
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertThrows(ResourceNotFoundException.class, () -> vehicleService.findById(99L));
     }
 
     @Test
     void update_toAlreadyUsedImmatriculation_throws409() {
-        Vehicle existant = exemple("VELO-001");
+        Vehicle existant = entite("VELO-001");
         when(vehicleRepository.findById(1L)).thenReturn(Optional.of(existant));
         when(vehicleRepository.existsByImmatriculation("VELO-002")).thenReturn(true);
 
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> vehicleService.update(1L, exemple("VELO-002")));
-
-        assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+        assertThrows(BusinessException.class, () -> vehicleService.update(1L, exemple("VELO-002")));
     }
 
     @Test
     void update_toSameImmatriculation_isAccepted() {
-        Vehicle existant = exemple("VELO-001");
+        Vehicle existant = entite("VELO-001");
         existant.setAutonomieKm(30);
-        Vehicle nouvellesValeurs = exemple("VELO-001");
-        nouvellesValeurs.setAutonomieKm(30);
         when(vehicleRepository.findById(1L)).thenReturn(Optional.of(existant));
         when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Vehicle modifie = vehicleService.update(1L, nouvellesValeurs);
+        VehicleResponse modifie = vehicleService.update(1L, exemple("VELO-001"));
 
-        assertEquals("VELO-001", modifie.getImmatriculation());
-        assertEquals(30, modifie.getAutonomieKm());
+        assertEquals("VELO-001", modifie.immatriculation());
+        assertEquals(30, modifie.autonomieKm());
+        assertEquals(VehicleStatus.DISPONIBLE, modifie.statut());
     }
 
     @Test
     void delete_withUnknownId_throws404() {
         when(vehicleRepository.existsById(99L)).thenReturn(false);
 
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> vehicleService.delete(99L));
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertThrows(ResourceNotFoundException.class, () -> vehicleService.delete(99L));
     }
 
-    /** Fabrique un vehicule d'exemple, sans statut puisqu'on teste le defaut. */
-    private Vehicle exemple(String immatriculation) {
+    /** Fabrique une requete de vehicule, sans statut puisqu'on teste le defaut. */
+    private VehicleRequest exemple(String immatriculation) {
+        return new VehicleRequest(VehicleType.VELO, immatriculation, 30, null);
+    }
+
+    /** Fabrique un vehicule deja enregistre, tel que la retourne le repository. */
+    private Vehicle entite(String immatriculation) {
         Vehicle vehicule = new Vehicle();
         vehicule.setType(VehicleType.VELO);
         vehicule.setImmatriculation(immatriculation);
         vehicule.setAutonomieKm(50);
+        vehicule.setStatut(VehicleStatus.DISPONIBLE);
         return vehicule;
     }
 }

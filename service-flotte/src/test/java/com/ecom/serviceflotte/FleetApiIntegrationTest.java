@@ -81,14 +81,16 @@ class FleetApiIntegrationTest {
         mockMvc.perform(delete("/api/stations/" + id))
                 .andExpect(status().isNoContent());
 
-        // 12. ressource inexistante -> 404 Not Found
+        // 12. ressource inexistante -> 404 Not Found, corps d'erreur normalise
         mockMvc.perform(get("/api/stations/" + id))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     void stationInvalidValues_rejectedWith400() throws Exception {
-        // 5. placesLibres superieur a capacite -> 400 Bad Request
+        // 5. placesLibres superieur a capacite -> 400 Bad Request, corps d'erreur normalise
         mockMvc.perform(post("/api/stations")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{"
@@ -97,7 +99,9 @@ class FleetApiIntegrationTest {
                                 + "\"capacite\":10,"
                                 + "\"placesLibres\":20"
                                 + "}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").exists());
 
         // 5 (suite). capacite nulle -> 400 Bad Request
         mockMvc.perform(post("/api/stations")
@@ -152,7 +156,8 @@ class FleetApiIntegrationTest {
         mockMvc.perform(delete("/api/vehicles/" + id))
                 .andExpect(status().isNoContent());
         mockMvc.perform(get("/api/vehicles/" + id))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
