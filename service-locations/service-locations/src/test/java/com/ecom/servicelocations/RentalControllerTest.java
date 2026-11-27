@@ -1,15 +1,24 @@
 package com.ecom.servicelocations;
 
+import com.ecom.servicelocations.client.FlotteClient;
 import com.ecom.servicelocations.repository.RentalRepository;
+import feign.FeignException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Map;
+import java.util.UUID;
+
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -23,9 +32,17 @@ class RentalControllerTest {
     @Autowired
     RentalRepository repository;
 
+    /** service-flotte est remplace par un mock : les tests restent unitaires et rapides. */
+    @MockitoBean
+    FlotteClient flotteClient;
+
     @BeforeEach
     void clean() {
         repository.deleteAll();
+        // Par defaut, la flotte repond que le vehicule existe et qu'il est disponible.
+        when(flotteClient.getVehicleById(anyLong())).thenReturn(Map.of(
+                "id", 1, "type", "VELO", "immatriculation", "TEST-001",
+                "autonomieKm", 40, "statut", "DISPONIBLE"));
     }
 
     private static final String CREATE_BODY = """
@@ -74,6 +91,67 @@ class RentalControllerTest {
         mvc.perform(get("/api/rentals/user/{userEmail}", "Salma@BikeFlow.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)));
+    }
+
+    // ---------- validation inter-services (V4) ----------
+
+    @Test
+    void create_vehicleUnknownInFleet_returns404() throws Exception {
+        FeignException introuvable = mock(FeignException.class);
+        when(introuvable.status()).thenReturn(404);
+        when(flotteClient.getVehicleById(anyLong())).thenThrow(introuvable);
+
+        mvc.perform(post("/api/rentals").contentType(MediaType.APPLICATION_JSON).content(CREATE_BODY))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString("introuvable dans service-flotte")));
+    }
+
+    @Test
+    void create_vehicleNotAvailable_returns409() throws Exception {
+        when(flotteClient.getVehicleById(anyLong())).thenReturn(Map.of(
+                "id", 1, "type", "VELO", "immatriculation", "TEST-001",
+                "autonomieKm", 0, "statut", "EN_LOCATION"));
+
+        mvc.perform(post("/api/rentals").contentType(MediaType.APPLICATION_JSON).content(CREATE_BODY))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString("n'est pas disponible")));
+    }
+
+    @Test
+    void create_fleetUnreachable_returns503() throws Exception {
+        when(flotteClient.getVehicleById(anyLong()))
+                .thenThrow(new RuntimeException("Connection refused"));
+
+        mvc.perform(post("/api/rentals").contentType(MediaType.APPLICATION_JSON).content(CREATE_BODY))
+                .andExpect(status().isServiceUnavailable());
+    }
+
+    // ---------- idempotence des ecritures (V4) ----------
+
+    @Test
+    void create_sameIdempotencyKey_returnsSameRental() throws Exception {
+        String cle = "test-" + UUID.randomUUID();
+
+        String premier = mvc.perform(post("/api/rentals")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Idempotency-Key", cle)
+                        .content(CREATE_BODY))
+                .andExpect(status().isCreated())
+                .andExpect(header().doesNotExist("Idempotent-Replay"))
+                .andReturn().getResponse().getContentAsString();
+
+        String second = mvc.perform(post("/api/rentals")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Idempotency-Key", cle)
+                        .content(CREATE_BODY))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Idempotent-Replay", "true"))
+                .andReturn().getResponse().getContentAsString();
+
+        org.junit.jupiter.api.Assertions.assertEquals(premier, second);
+        org.junit.jupiter.api.Assertions.assertEquals(1, repository.count());
     }
 
     // ---------- erreurs de validation (400) ----------

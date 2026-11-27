@@ -1,4 +1,4 @@
-package com.ecom.serviceflotte.entity;
+package com.ecom.serviceflotte.model;
 
 public enum VehicleStatus {
     DISPONIBLE,

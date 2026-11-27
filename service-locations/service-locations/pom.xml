@@ -70,6 +70,12 @@
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
 
+        <!-- OpenFeign (V4 : validation inter-services du vehicule avant une location) -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
         <!-- Monitoring and health checks -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

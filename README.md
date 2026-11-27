@@ -20,7 +20,8 @@ Le projet permet de gérer les utilisateurs, les factures, la flotte de véhicul
 
 ## Architecture
 
-![Architecture microservices BikeFlow](docs/assets/architecture_microservices_style_original.png)
+<img width="2760" height="1480" alt="architecture_microservices_style_original" src="https://github.com/user-attachments/assets/47e874c2-440c-4edf-a8f2-df6848d3cbe8" />
+
 
 | Composant | Rôle | Port |
 |---|---|---:|
@@ -36,9 +37,8 @@ Le projet permet de gérer les utilisateurs, les factures, la flotte de véhicul
 
 ## Diagramme de classes
 
-![Diagramme de classes BikeFlow](docs/assets/class_bikeflow.png)
+<img width="1536" height="1024" alt="class_bikeflow" src="https://github.com/user-attachments/assets/293a8f1d-0fb3-498e-a030-c5a69f0cde8e" />
 
-Une version Mermaid du diagramme est disponible dans [docs/class-diagram.md](docs/class-diagram.md).
 
 ## Structure du projet
 
@@ -178,7 +178,3 @@ Sur Windows :
 ```powershell
 .\mvnw.cmd test
 ```
-
-## Auteur
-
-- Yassine Touli

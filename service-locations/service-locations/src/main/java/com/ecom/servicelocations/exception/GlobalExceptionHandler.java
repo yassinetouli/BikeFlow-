@@ -29,6 +29,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage(), req, List.of());
     }
 
+    /** 503 : la validation inter-services est impossible (service-flotte injoignable). */
+    @ExceptionHandler(ServiceIndisponibleException.class)
+    public ResponseEntity<ApiError> handleIndisponible(ServiceIndisponibleException ex, HttpServletRequest req) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), req, List.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
         List<String> details = ex.getBindingResult().getFieldErrors().stream()

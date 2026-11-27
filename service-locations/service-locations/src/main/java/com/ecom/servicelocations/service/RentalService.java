@@ -29,16 +29,23 @@ public class RentalService {
             RentalStatus.RESERVEE, RentalStatus.EN_COURS, RentalStatus.EN_RETARD);
 
     private final RentalRepository repository;
+    private final VerificationVehicule verificationVehicule;
     private final BigDecimal tarifParKm;
 
     public RentalService(RentalRepository repository,
+                         VerificationVehicule verificationVehicule,
                          @Value("${rental.tarif-par-km:2.00}") BigDecimal tarifParKm) {
         this.repository = repository;
+        this.verificationVehicule = verificationVehicule;
         this.tarifParKm = tarifParKm;
     }
 
     /** BF-07 : réserver() -> location au statut RESERVEE. */
     public RentalResponse reserver(RentalCreateRequest request) {
+        // Validation inter-services (V4) : service-flotte doit confirmer que le vehicule
+        // existe et qu'il est DISPONIBLE avant que la location soit ecrite.
+        verificationVehicule.verifierDisponibilite(request.vehicleId());
+
         if (repository.existsByVehicleIdAndStatutIn(request.vehicleId(), ACTIVE)) {
             throw new BusinessException(
                     "Le véhicule " + request.vehicleId() + " est déjà associé à une location active");
