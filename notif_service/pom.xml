@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.example</groupId>
-    <artifactId>notif_service</artifactId>
+    <artifactId>notif-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>notif_service</name>
     <description>notif_service</description>
