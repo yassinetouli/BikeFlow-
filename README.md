@@ -40,10 +40,7 @@ Le projet permet de gérer les utilisateurs, les factures, la flotte de véhicul
 | phpMyAdmin | Interface d'administration MySQL | 8085 |
 
 ## Diagramme de classes
-<<<<<<< HEAD
 
-<img width="1536" height="1024" alt="class_bikeflow" src="https://github.com/user-attachments/assets/293a8f1d-0fb3-498e-a030-c5a69f0cde8e" />
-=======
 <img width="2105" height="2198" alt="diagramme_classes (1)" src="https://github.com/user-attachments/assets/7740d740-264c-4a21-b5a2-09ccc42a4ce7" />
 >>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
 
