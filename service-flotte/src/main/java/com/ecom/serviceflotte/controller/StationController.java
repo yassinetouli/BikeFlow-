@@ -6,7 +6,10 @@ import java.util.Optional;
 
 import com.ecom.serviceflotte.dto.StationRequest;
 import com.ecom.serviceflotte.dto.StationResponse;
+<<<<<<< HEAD
 import com.ecom.serviceflotte.idempotence.IdempotencyStore;
+=======
+>>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
 import com.ecom.serviceflotte.service.StationService;
 
 import org.springframework.http.ResponseEntity;
@@ -56,6 +59,7 @@ public class StationController {
      * la station deja creee au lieu de creer une deuxieme station.
      */
     @PostMapping
+<<<<<<< HEAD
     public ResponseEntity<StationResponse> createStation(@Valid @RequestBody StationRequest request,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         Optional<StationResponse> deja = idempotence.lire(idempotencyKey, StationResponse.class);
@@ -76,6 +80,13 @@ public class StationController {
         return ResponseEntity.created(location)
                 .header("Idempotent-Replay", "true")
                 .body(existant);
+=======
+    public ResponseEntity<StationResponse> createStation(@Valid @RequestBody StationRequest request) {
+        StationResponse created = stationService.create(request);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}").buildAndExpand(created.id()).toUri();
+        return ResponseEntity.created(location).body(created);
+>>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
     }
 
     @PutMapping("/{id}")

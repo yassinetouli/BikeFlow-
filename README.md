@@ -20,8 +20,12 @@ Le projet permet de gérer les utilisateurs, les factures, la flotte de véhicul
 
 ## Architecture
 
+<<<<<<< HEAD
 <img width="2760" height="1480" alt="architecture_microservices_style_original" src="https://github.com/user-attachments/assets/47e874c2-440c-4edf-a8f2-df6848d3cbe8" />
 
+=======
+<img width="1600" height="1105" alt="WhatsApp Image 2026-11-25 at 16 47 09" src="https://github.com/user-attachments/assets/45e14bcf-e292-432e-82df-ccd35dab2448" />
+>>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
 
 | Composant | Rôle | Port |
 |---|---|---:|
@@ -36,8 +40,12 @@ Le projet permet de gérer les utilisateurs, les factures, la flotte de véhicul
 | phpMyAdmin | Interface d'administration MySQL | 8085 |
 
 ## Diagramme de classes
+<<<<<<< HEAD
 
 <img width="1536" height="1024" alt="class_bikeflow" src="https://github.com/user-attachments/assets/293a8f1d-0fb3-498e-a030-c5a69f0cde8e" />
+=======
+<img width="2105" height="2198" alt="diagramme_classes (1)" src="https://github.com/user-attachments/assets/7740d740-264c-4a21-b5a2-09ccc42a4ce7" />
+>>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
 
 
 ## Structure du projet

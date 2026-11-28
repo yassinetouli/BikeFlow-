@@ -1,7 +1,11 @@
 {
   "info": {
     "name": "BikeFlow - Tous les services",
+<<<<<<< HEAD
     "description": "Collection complete BikeFlow : parcours E2E inter-services puis, service par service, toutes les requetes des collections service-utilisateurs, service-flotte et service-locations (memes tests, memes codes attendus).\n\nPrerequis : MySQL sur 3306, service-utilisateurs 8081, service-locations 8082, service-flotte 8083. Ordre : lancer la collection entiere via le Collection Runner, du haut vers le bas (les ids captures dans un dossier servent aux requetes suivantes).\n\nVariables : utilisateursUrl, flotteUrl, locationsUrl (modifier si vos ports changent). La Gateway (8080) n'est pas testee ici : seule la route /api/users/** y est active.\n\nDossier 4 - V6 : retry, circuit breaker et fallback. Lancer 00/01/02 avec service-flotte demarre, puis arreter service-flotte et lancer 03/04/05, enfin 06 pour reinitialiser.",
+=======
+    "description": "Collection complete BikeFlow : parcours E2E inter-services puis, service par service, toutes les requetes des collections service-utilisateurs, service-flotte et service-locations (memes tests, memes codes attendus).\n\nPrerequis : MySQL sur 3306, service-utilisateurs 8081, service-locations 8082, service-flotte 8083. Ordre : lancer la collection entiere via le Collection Runner, du haut vers le bas (les ids captures dans un dossier servent aux requetes suivantes).\n\nVariables : utilisateursUrl, flotteUrl, locationsUrl (modifier si vos ports changent). La Gateway (8080) n'est pas testee ici : seule la route /api/users/** y est active.",
+>>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -76,6 +80,7 @@
     {
       "key": "rentalId2",
       "value": ""
+<<<<<<< HEAD
     },
     {
       "key": "v6UserId",
@@ -136,6 +141,8 @@
     {
       "key": "v4VehicleIndispoId",
       "value": ""
+=======
+>>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
     }
   ],
   "item": [
@@ -1747,6 +1754,7 @@
           "name": "A - Cas valides",
           "item": [
             {
+<<<<<<< HEAD
               "name": "00a - Préparer une station dans la flotte (201)",
               "request": {
                 "method": "POST",
@@ -1880,6 +1888,8 @@
               ]
             },
             {
+=======
+>>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
               "name": "01 - Créer une location (201)",
               "request": {
                 "method": "POST",
@@ -1901,7 +1911,11 @@
                 },
                 "body": {
                   "mode": "raw",
+<<<<<<< HEAD
                   "raw": "{\n  \"vehicleId\": {{locVehicleId}},\n  \"userEmail\": \"salma@bikeflow.com\",\n  \"stationDepart\": 100\n}"
+=======
+                  "raw": "{\n  \"vehicleId\": 1,\n  \"userEmail\": \"salma@bikeflow.com\",\n  \"stationDepart\": 100\n}"
+>>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
                 }
               },
               "event": [
@@ -2392,7 +2406,11 @@
                 },
                 "body": {
                   "mode": "raw",
+<<<<<<< HEAD
                   "raw": "{\n  \"vehicleId\": {{locVehicleId2}},\n  \"userEmail\": \"ali@bikeflow.com\",\n  \"stationDepart\": 100\n}"
+=======
+                  "raw": "{\n  \"vehicleId\": 2,\n  \"userEmail\": \"ali@bikeflow.com\",\n  \"stationDepart\": 100\n}"
+>>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
                 }
               },
               "event": [
@@ -2430,7 +2448,11 @@
                 },
                 "body": {
                   "mode": "raw",
+<<<<<<< HEAD
                   "raw": "{\n  \"vehicleId\": {{locVehicleId2}},\n  \"userEmail\": \"sara@bikeflow.com\",\n  \"stationDepart\": 100\n}"
+=======
+                  "raw": "{\n  \"vehicleId\": 2,\n  \"userEmail\": \"sara@bikeflow.com\",\n  \"stationDepart\": 100\n}"
+>>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
                 }
               },
               "event": [
@@ -2584,6 +2606,7 @@
               ]
             }
           ]
+<<<<<<< HEAD
         },
         {
           "name": "E - Nettoyage",
@@ -3387,6 +3410,8 @@
               }
             }
           ]
+=======
+>>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
         }
       ]
     }
