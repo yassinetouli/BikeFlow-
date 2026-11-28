@@ -6,10 +6,7 @@ import java.util.Optional;
 
 import com.ecom.serviceflotte.dto.VehicleRequest;
 import com.ecom.serviceflotte.dto.VehicleResponse;
-<<<<<<< HEAD
 import com.ecom.serviceflotte.idempotence.IdempotencyStore;
-=======
->>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
 import com.ecom.serviceflotte.service.VehicleService;
 
 import org.springframework.http.HttpStatus;
@@ -61,7 +58,6 @@ public class VehicleController {
      * deja utilisee) ou de creer un doublon.
      */
     @PostMapping
-<<<<<<< HEAD
     public ResponseEntity<VehicleResponse> createVehicle(@Valid @RequestBody VehicleRequest request,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         Optional<VehicleResponse> deja = idempotence.lire(idempotencyKey, VehicleResponse.class);
@@ -82,13 +78,6 @@ public class VehicleController {
         return ResponseEntity.created(location)
                 .header("Idempotent-Replay", "true")
                 .body(existant);
-=======
-    public ResponseEntity<VehicleResponse> createVehicle(@Valid @RequestBody VehicleRequest request) {
-        VehicleResponse created = vehicleService.create(request);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}").buildAndExpand(created.id()).toUri();
-        return ResponseEntity.created(location).body(created);
->>>>>>> 7005120ac66d5f1e55e58bfcc267e308f96a6063
     }
 
     @PutMapping("/{id}")
